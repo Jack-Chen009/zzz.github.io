@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>💤 关于</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Helvetica Neue", "Hiragino Sans", "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: #111;
+      line-height: 1.6;
+      min-height: 100vh;
+      overflow-x: hidden;
+      background: #fff;
+    }
+
+    /* ========== 顶部导航 ========== */
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 1000;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid #eee;
+    }
+
+    .nav-container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 32px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      gap: 40px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: #111;
+      font-size: 1.15rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      transition: opacity 0.25s;
+    }
+
+    .logo:hover {
+      opacity: 0.6;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 28px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: #555;
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 400;
+      position: relative;
+      padding: 4px 0;
+      transition: color 0.25s;
+    }
+
+    .nav-links a::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 0;
+      height: 1px;
+      background: #111;
+      transition: width 0.3s ease;
+    }
+
+    .nav-links a:hover {
+      color: #111;
+    }
+
+    .nav-links a:hover::after {
+      width: 100%;
+    }
+
+    .menu-toggle {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      background: none;
+      border: none;
+      padding: 4px;
+      margin-left: auto;
+      cursor: pointer;
+    }
+
+    .menu-toggle span {
+      display: block;
+      width: 20px;
+      height: 1.5px;
+      background: #111;
+      transition: all 0.3s;
+    }
+
+    /* ========== 主内容 ========== */
+    main {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 140px 32px 100px;
+    }
+
+    /* 头像 + 名字 */
+    .profile {
+      text-align: center;
+      margin-bottom: 64px;
+      opacity: 0;
+      animation: fadeIn 0.8s ease forwards 0.2s;
+    }
+
+    .avatar {
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      border: 1.5px solid #111;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.2rem;
+      margin: 0 auto 28px;
+      background: #fafafa;
+      transition: transform 0.3s ease;
+    }
+
+    .avatar:hover {
+      transform: scale(1.04);
+    }
+
+    .name {
+      font-size: 1.75rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    .tagline {
+      font-size: 0.95rem;
+      color: #888;
+      letter-spacing: 0.5px;
+    }
+
+    /* 关于 */
+    .section {
+      margin-bottom: 56px;
+      opacity: 0;
+      animation: fadeIn 0.8s ease forwards 0.4s;
+    }
+
+    .section-title {
+      font-size: 0.75rem;
+      color: #999;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .section-title::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: #eee;
+    }
+
+    .bio {
+      font-size: 1.05rem;
+      color: #333;
+      line-height: 1.85;
+    }
+
+    .bio p + p {
+      margin-top: 16px;
+    }
+
+    /* 联系方式 / 链接 */
+    .list-group {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 4px 32px;
+    }
+
+    .list-group a {
+      color: #555;
+      text-decoration: none;
+      font-size: 0.95rem;
+      padding: 12px 0;
+      border-bottom: 1px solid transparent;
+      transition: color 0.25s, border-color 0.25s;
+      display: inline-block;
+    }
+
+    .list-group a:hover {
+      color: #111;
+      border-bottom-color: #111;
+    }
+
+    /* 时间线（可选经历） */
+    .timeline-item {
+      display: flex;
+      gap: 24px;
+      padding: 18px 0;
+      border-bottom: 1px solid #f0f0f0;
+      align-items: baseline;
+      transition: background 0.2s;
+    }
+
+    .timeline-item:hover {
+      background: #fafafa;
+    }
+
+    .timeline-date {
+      font-size: 0.85rem;
+      color: #999;
+      min-width: 56px;
+      flex-shrink: 0;
+    }
+
+    .timeline-text {
+      font-size: 0.95rem;
+      color: #333;
+      flex: 1;
+    }
+
+    .timeline-text span {
+      display: block;
+      font-size: 0.85rem;
+      color: #888;
+      margin-top: 2px;
+    }
+
+    /* 页脚 */
+    footer {
+      text-align: center;
+      padding: 40px 0 20px;
+      font-size: 0.8rem;
+      color: #bbb;
+      opacity: 0;
+      animation: fadeIn 0.8s ease forwards 0.9s;
+    }
+
+    /* 动画 */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(14px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* 点击涟漪 */
+    .click-ripple {
+      position: fixed;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.07);
+      pointer-events: none;
+      z-index: 9997;
+      transform: translate(-50%, -50%) scale(0);
+      animation: ripple 0.55s ease-out forwards;
+    }
+
+    @keyframes ripple {
+      to {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0;
+      }
+    }
+
+    /* ========== 响应式 ========== */
+    @media (max-width: 768px) {
+      .nav-container {
+        gap: 20px;
+      }
+
+      .nav-links {
+        position: fixed;
+        top: 64px;
+        left: 0;
+        width: 100%;
+        background: #fff;
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 24px 32px;
+        gap: 18px;
+        transform: translateY(-120%);
+        transition: transform 0.3s ease;
+        border-bottom: 1px solid #eee;
+      }
+
+      .nav-links.active {
+        transform: translateY(0);
+      }
+
+      .menu-toggle {
+        display: flex;
+      }
+
+      .menu-toggle.active span:nth-child(1) {
+        transform: translateY(6.5px) rotate(45deg);
+      }
+
+      .menu-toggle.active span:nth-child(2) {
+        opacity: 0;
+      }
+
+      .menu-toggle.active span:nth-child(3) {
+        transform: translateY(-6.5px) rotate(-45deg);
+      }
+
+      main {
+        padding: 120px 24px 80px;
+      }
+
+      .list-group {
+        grid-template-columns: 1fr 1fr;
+        gap: 0 20px;
+      }
+
+      .timeline-item {
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .timeline-date {
+        min-width: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 顶部导航 -->
+  <header>
+    <div class="nav-container">
+      <a href="#" class="logo">૮ ˶ᵔ ᵕ ᵔ˶ ა</a>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html">首页</a></li>
+        <li><a href="#software">软件</a></li>
+        <li><a href="#files">资源</a></li>
+        <li><a href="#blog">推文</a></li>
+        <li><a href="contact.htm">联系</a></li>
+      </ul>
+      <button class="menu-toggle" id="menuToggle" aria-label="菜单">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <!-- 个人信息头部 -->
+    <style>
+        .avatar {
+    /* 1. 设置圆形区域的大小 (必须是正方形) */
+    width: 150px;       /* 你可以根据需要修改大小 */
+    height: 150px;      /* 必须与 width 相等 */
+
+    /* 2. 将正方形变为圆形 */
+    border-radius: 50%;
+
+    /* 3. 关键：隐藏超出圆形区域的图片内容 */
+    overflow: hidden;
+
+    /* (可选) 添加一个边框，让圆形更明显 */
+    border: 3px solid #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.avatar img {
+    /* 4. 确保图片填满父级圆圈 */
+    width: 100%;
+    height: 100%;
+
+    /* 5. 关键：保持图片比例，防止拉伸失真，并居中裁剪 */
+    object-fit: cover;
+}
+    </style>
+    <section class="profile">
+      <div class="avatar">
+        <img src="photo/embrace.jpg" alt="头像">
+      </div>
+      <h1 class="name">木可木可</h1>
+      <p class="tagline">796 / ideas / Develop</p>
+    </section>
+
+    <!-- 关于 -->
+    <section class="section">
+      <h2 class="section-title">关于</h2>
+      <div class="bio">
+        <p>柯南推 罗小黑推<br>
+        最喜欢师姐了！师傅第一！(笑)</p>
+        <p>海内存知己 天涯若比邻</p>
+      </div>
+    </section>
+
+    <!-- 联系方式 -->
+    <section class="section" style="animation-delay: 0.55s">
+      <h2 class="section-title">联系</h2>
+      <div class="list-group">
+        <a href="mailto:winiworldmn6@gmail.com">电子信箱</a>
+        <a href="https://x.com/ZzzConankun" target="_blank" rel="noopener">Twitter / X</a>
+        <a href="https://m.facebook.com/profile.php?id=100074818950152" target="_blank" rel="noopener">Facebook</a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    © 2026 czw · 用 ♥ 与dreams做成
+  </footer>
+
+  <script>
+    // 移动端菜单
+    const menuToggle = document.getElementById('menuToggle');
+    const navLinks = document.getElementById('navLinks');
+
+    menuToggle.addEventListener('click', () => {
+      menuToggle.classList.toggle('active');
+      navLinks.classList.toggle('active');
+    });
+
+    // 点击涟漪
+    document.addEventListener('click', (e) => {
+      const ripple = document.createElement('div');
+      ripple.className = 'click-ripple';
+      ripple.style.left = e.clientX + 'px';
+      ripple.style.top = e.clientY + 'px';
+      ripple.style.width = ripple.style.height = Math.max(window.innerWidth, window.innerHeight) * 0.4 + 'px';
+      document.body.appendChild(ripple);
+      setTimeout(() => ripple.remove(), 600);
+    });
+  </script>
+</body>
+</html>
