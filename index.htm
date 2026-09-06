@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="网站留言与评论">
+    <title>留言板 | 论坛测试</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --text: #172033;
+            --muted: #64748b;
+            --border: #e2e8f0;
+            --surface: #ffffff;
+            --background: #f1f5f9;
+            --danger: #b91c1c;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            color: var(--text);
+            background: linear-gradient(160deg, #dbeafe 0, var(--background) 38rem);
+            font: 16px/1.6 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+        main { width: min(760px, calc(100% - 32px)); margin: 0 auto; padding: 56px 0; }
+        .hero { margin-bottom: 28px; }
+        h1 { margin: 0 0 8px; font-size: clamp(2rem, 6vw, 3rem); letter-spacing: -.04em; }
+        .hero p { margin: 0; color: var(--muted); }
+        .panel, .comment {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            box-shadow: 0 12px 30px rgb(15 23 42 / 7%);
+        }
+        .panel { padding: 24px; }
+        label { display: block; margin-bottom: 7px; font-weight: 650; }
+        input, textarea {
+            display: block;
+            width: 100%;
+            padding: 11px 13px;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            color: var(--text);
+            background: #fff;
+            font: inherit;
+        }
+        input:focus, textarea:focus { outline: 3px solid rgb(37 99 235 / 18%); border-color: var(--primary); }
+        textarea { min-height: 120px; resize: vertical; }
+        .field { margin-bottom: 17px; }
+        .form-footer, .list-heading, .comment-meta { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+        .form-footer { margin-top: 18px; }
+        .hint, .counter, .comment-meta { color: var(--muted); font-size: .9rem; }
+        button {
+            border: 0;
+            border-radius: 10px;
+            padding: 10px 18px;
+            color: #fff;
+            background: var(--primary);
+            cursor: pointer;
+            font: inherit;
+            font-weight: 650;
+        }
+        button:hover { background: var(--primary-dark); }
+        button:disabled { cursor: wait; opacity: .65; }
+        .status { min-height: 1.5em; margin: 12px 2px 0; color: var(--muted); }
+        .status.error { color: var(--danger); }
+        .comments { margin-top: 32px; }
+        .list-heading { margin-bottom: 12px; }
+        .list-heading h2 { margin: 0; font-size: 1.25rem; }
+        #comment-list { display: grid; gap: 12px; }
+        .comment { padding: 18px 20px; }
+        .comment p { margin: 10px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+        .comment strong { color: var(--text); }
+        .empty { padding: 24px; color: var(--muted); text-align: center; border: 1px dashed #cbd5e1; border-radius: 12px; }
+        @media (max-width: 520px) {
+            main { padding: 32px 0; }
+            .panel { padding: 18px; }
+            .form-footer { align-items: flex-end; flex-direction: column; }
+            button { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+<main>
+    <header class="hero">
+        <h1>留言板</h1>
+        <p>分享你的想法，和访客一起交流。</p>
+    </header>
+
+    <section class="panel" aria-labelledby="form-title">
+        <h2 id="form-title">发表评论</h2>
+        <form id="comment-form">
+            <div class="field">
+                <label for="author">昵称</label>
+                <input id="author" name="author" maxlength="40" autocomplete="nickname" required placeholder="请输入昵称">
+            </div>
+            <div class="field">
+                <label for="content">内容</label>
+                <textarea id="content" name="content" maxlength="1000" required placeholder="写下你的评论..."></textarea>
+                <div class="counter" id="counter">0 / 1000</div>
+            </div>
+            <div class="form-footer">
+                <span class="hint">请文明交流，评论提交后会立即显示。</span>
+                <button id="submit-button" type="submit">发布评论</button>
+            </div>
+            <p id="status" class="status" role="status" aria-live="polite"></p>
+        </form>
+    </section>
+
+    <section class="comments" aria-labelledby="comments-title">
+        <div class="list-heading">
+            <h2 id="comments-title">最新评论</h2>
+            <span id="comment-count" class="hint"></span>
+        </div>
+        <div id="comment-list"><div class="empty">正在加载评论...</div></div>
+    </section>
+</main>
+
+<script>
+    // Set window.COMMENTS_API_URL before this script when the Worker uses another origin.
+    const apiUrl = window.COMMENTS_API_URL || "/api/comments";
+    const localKey = "site-comments-v1";
+    const form = document.querySelector("#comment-form");
+    const authorInput = document.querySelector("#author");
+    const contentInput = document.querySelector("#content");
+    const submitButton = document.querySelector("#submit-button");
+    const status = document.querySelector("#status");
+    const list = document.querySelector("#comment-list");
+    const count = document.querySelector("#comment-count");
+    const counter = document.querySelector("#counter");
+
+    function setStatus(message, isError) {
+        status.textContent = message;
+        status.classList.toggle("error", Boolean(isError));
+    }
+
+    function localComments() {
+        try {
+            const comments = JSON.parse(localStorage.getItem(localKey) || "[]");
+            return Array.isArray(comments) ? comments : [];
+        } catch (error) {
+            console.error("读取本地评论失败", error);
+            return [];
+        }
+    }
+
+    function saveLocalComment(comment) {
+        const comments = [comment, ...localComments()].slice(0, 100);
+        localStorage.setItem(localKey, JSON.stringify(comments));
+        return comments;
+    }
+
+    function render(comments) {
+        list.replaceChildren();
+        count.textContent = comments.length ? `${comments.length} 条评论` : "";
+        if (!comments.length) {
+            list.innerHTML = '<div class="empty">还没有评论，来发布第一条吧。</div>';
+            return;
+        }
+        comments.forEach((comment) => {
+            const article = document.createElement("article");
+            article.className = "comment";
+            const meta = document.createElement("div");
+            meta.className = "comment-meta";
+            const name = document.createElement("strong");
+            name.textContent = comment.author;
+            const date = document.createElement("time");
+            const createdAt = new Date(comment.createdAt);
+            date.dateTime = createdAt.toISOString();
+            date.textContent = createdAt.toLocaleString("zh-CN");
+            meta.append(name, date);
+            const content = document.createElement("p");
+            content.textContent = comment.content;
+            article.append(meta, content);
+            list.append(article);
+        });
+    }
+
+    async function loadComments() {
+        try {
+            const response = await fetch(apiUrl, { headers: { Accept: "application/json" } });
+            if (!response.ok) throw new Error(`评论加载失败 (${response.status})`);
+            const comments = await response.json();
+            render(Array.isArray(comments) ? comments : []);
+        } catch (error) {
+            console.warn(error);
+            render(localComments());
+            setStatus("评论服务暂时不可用，当前显示的是本机评论。", true);
+        }
+    }
+
+    contentInput.addEventListener("input", () => {
+        counter.textContent = `${contentInput.value.length} / 1000`;
+    });
+
+    form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const payload = { author: authorInput.value.trim(), content: contentInput.value.trim() };
+        if (!payload.author || !payload.content) {
+            setStatus("昵称和内容不能为空。", true);
+            return;
+        }
+        submitButton.disabled = true;
+        setStatus("正在发布...");
+        try {
+            const response = await fetch(apiUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", Accept: "application/json" },
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) throw new Error(`评论发布失败 (${response.status})`);
+            const comment = await response.json();
+            form.reset();
+            counter.textContent = "0 / 1000";
+            setStatus("评论发布成功！");
+            await loadComments();
+            if (comment && !comment.id) console.warn("评论接口返回的数据缺少 id");
+        } catch (error) {
+            console.warn(error);
+            const comment = { ...payload, id: crypto.randomUUID(), createdAt: new Date().toISOString() };
+            render(saveLocalComment(comment));
+            setStatus("在线服务不可用，评论已保存到本机。配置 Worker 后可实现多人共享。", true);
+        } finally {
+            submitButton.disabled = false;
+        }
+    });
+
+    loadComments();
+</script>
+</body>
+</html>
